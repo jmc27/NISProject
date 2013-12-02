@@ -1,77 +1,102 @@
 import java.io.IOException;
-import java.util.*;
-        
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.conf.*;
-import org.apache.hadoop.io.*;
-import org.apache.hadoop.mapred.InputFormat;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.OutputCollector;
-import org.apache.hadoop.mapred.OutputFormat;
-import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.mapreduce.Reducer.Context;
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.StringTokenizer;
 
-import edu.umd.cloud9.*;
-import edu.umd.cloud9.collection.wikipedia.WikipediaPage;
-import edu.umd.cloud9.collection.wikipedia.WikipediaPageInputFormat;
+import org.apache.hadoop.fs.FileSystem;
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextOutputFormat;
+
+import edu.umd.cloud9.collection.wikipedia.*;
+
+
 
 public class InvertedIndex {
 
-  public static class InvertedIndexMapper extends Mapper<LongWritable, WikipediaPage, Text, Text> {
+	public static class InvertedIndexMapper extends MapReduceBase
+	implements Mapper<LongWritable, WikipediaPage, Text, Text> {
+	
+	private Text title = new Text();
 
-    public void map(LongWritable key, WikipediaPage p, Context context)
-        throws IOException, InterruptedException {
-    	
-      String val = p.getContent();
+		public void map(LongWritable key, WikipediaPage value,
+				OutputCollector<Text, Text>	output, Reporter report)
+				throws IOException {
+			
+			if (!value.isArticle()){
+				return;
+			}
+			String articleTitle = value.getDocid();
+			title.set(articleTitle);
+			
+			StringTokenizer tokenizer = new StringTokenizer(value.getContent());
+      			while (tokenizer.hasMoreTokens()){
+    	  			String word = tokenizer.nextToken();
+    	  			output.collect(new Text(word), title);
+      			}	
+		}
+	}
 
-      StringTokenizer tokenizer = new StringTokenizer(val);
-      while (tokenizer.hasMoreTokens()){
-    	  String word = tokenizer.nextToken();
-    	  context.write(new Text(word), new Text(p.getDocid()));
-      }
-    	
-    }
-  }
+	public static class InvertedIndexReducer extends MapReduceBase
+		implements Reducer<Text, Text, Text, Text> {
+		
+		public void reduce (Text key, Iterator<Text> values,
+				OutputCollector<Text, Text> output, Reporter report)
+				throws IOException {
+			
+			Set<String> articlesSet = new HashSet<String>();
+			Text articleNames = new Text();
+			
+			while (values.hasNext()) {
+				articlesSet.add(values.next().toString());
+			}
+			
+			String names = "";
+			
+			for (String s : articlesSet) {
+				names += s + ", ";
+			}
+			
+			articleNames.set(names);
+			
+			output.collect(key, articleNames);
+			
+		}
+	}
 
-  public static class InvertedIndexReducer extends Reducer<Text, Text, Text, Text> {
+	public static void main (String[] args) throws Exception {
+		JobConf conf = new JobConf(InvertedIndex.class);
+		conf.setJobName("InvertedIndex");
+		
+		conf.setInputFormat(WikipediaPageInputFormat.class);
+		conf.setOutputFormat(TextOutputFormat.class);
+		
+		conf.setMapperClass(InvertedIndexMapper.class);
+		conf.setReducerClass(InvertedIndexReducer.class);
+		conf.setMapOutputKeyClass(Text.class);
+		conf.setMapOutputValueClass(Text.class);
+		conf.setOutputKeyClass(Text.class);
+		conf.setOutputValueClass(Text.class);
+		
+		FileInputFormat.setInputPaths(conf, new Path(args[0]));
+		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 
-    public void reduce(Text key, Iterable<Text> values, Context context)
-        throws IOException, InterruptedException {
-    	Iterator i = values.iterator();
-    	String result = "";
-    	while (i.hasNext()){
-    		result = result + " "+i.next().toString();
-    	}
-    	context.write(key, new Text(result));
-    	
-    }
-  }
-
-  public static void main(String[] args) throws Exception {
-	    Configuration conf = new Configuration();
-	        
-	        Job job = new Job(conf, "InvertedIndex");
-	   
-	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(Text.class);
-	    
-	    job.setMapperClass(InvertedIndexMapper.class);
-	    job.setReducerClass(InvertedIndexReducer.class);
-	        
-	    job.setInputFormatClass(WikipediaPageInputFormat.class);
-	    job.setOutputFormatClass(TextOutputFormat.class);
-	    
-	    FileInputFormat.addInputPath(job, new Path("input"));
-	    FileOutputFormat.setOutputPath(job, new Path("output"));
-	        
-	    job.waitForCompletion(true);
-	  
-
-  }
+		FileSystem.get(conf).delete(new Path("out"),true);
+		
+		long startTime = System.currentTimeMillis();
+		JobClient.runJob(conf);
+		System.out.println("Job finished in :" + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
+	}
 }
-
