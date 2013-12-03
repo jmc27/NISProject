@@ -1,63 +1,132 @@
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
-public class ScrubWords
-{
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextOutputFormat;
+
+import edu.umd.cloud9.collection.wikipedia.*;
+
+
+
+public class ScrubWords {
+
+	public static class ScrubWordsMapper extends MapReduceBase
+	implements Mapper<LongWritable, WikipediaPage, Text, IntWritable> {
 	
-	// takes a word until the first punctuation
-	public String scrubWord(String word)
-	{
-		word = word.toLowerCase();
-		int i = 0;
-		boolean done = false;
-		String end = "";
-		char letter;
-		
-		while(!done && i < word.length())
-		{
-			letter = word.charAt(i);
+		private Text word = new Text();
+		private final static IntWritable one = new IntWritable(1);
+
+		public void map(LongWritable key, WikipediaPage value,
+				OutputCollector<Text, IntWritable>	output, Reporter report)
+				throws IOException {
 			
-			if(letter >= 97 && letter <= 122)
-			{
-				end = end + letter;
+			if (value.isArticle()) {
+				
+				String content = value.getContent();
+				StringTokenizer st = new StringTokenizer(content);
+			    
+				while (st.hasMoreTokens()){
+			    	String s = st.nextToken();
+			    	
+			    	ArrayList<String> words = scrubWords(s);
+			    	
+			    	for (String s2: words) {
+			    		word.set(s2);
+			    		output.collect(word, one);
+			    	}
+			    }
 			}
-			else
-			{
-				done = true;
-			}
-			i++;
 		}
+	}
+
+	public static class ScrubWordsReducer extends MapReduceBase
+		implements Reducer<Text, IntWritable, Text, IntWritable> {
 		
+		public void reduce (Text key, Iterator<IntWritable> values,
+				OutputCollector<Text, IntWritable> output, Reporter report)
+				throws IOException {
+			
+			int count = 0;
+			
+			while (values.hasNext()) {
+				count += values.next().get();
+			}
+			
+			output.collect(key, new IntWritable(count));
+			
+		}
+	}
+
+	public static void main (String[] args) throws Exception {
+		JobConf conf = new JobConf(ScrubWords.class);
+		conf.setJobName("ScrubWords");
 		
-		return end;
+		conf.setInputFormat(WikipediaPageInputFormat.class);
+		conf.setOutputFormat(TextOutputFormat.class);
 		
+		conf.setMapperClass(ScrubWordsMapper.class);
+		conf.setReducerClass(ScrubWordsReducer.class);
+		conf.setMapOutputKeyClass(Text.class);
+		conf.setMapOutputValueClass(IntWritable.class);
+		conf.setOutputKeyClass(Text.class);
+		conf.setOutputValueClass(IntWritable.class);
+		
+		FileInputFormat.setInputPaths(conf, new Path(args[0]));
+		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+		
+		long startTime = System.currentTimeMillis();
+		JobClient.runJob(conf);
+		System.out.println("Job finished in: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
 	}
 	
-	// splits the word and returns an ArrayList<String> of what punctuation splits up
-	// i assumed most contractions would result in one letter things we could filter out as stop words?
-	// ex. mother-in-law should result in an arraylist {mother, in, law}
-	// won't results in arraylist {won, t} issues arise when deciding what to do with these because both aren't really viable words to index
-	// lions' results in arraylist {lions} and here is the issue of pluralization is there a difference between lion and lions or should it be scrubbed
-	public ArrayList<String> scrubWords(String word)
+	
+	public static ArrayList<String> scrubWords(String word)
 	{
-		word = word.toLowerCase();
 		int i = 0;
 		ArrayList<String> end = new ArrayList<String>();
 		char letter;
-		String word2 = "";
+		String wordEnd = "";
 		
 		while(i < word.length())
 		{
 			letter = word.charAt(i);
 			
-			if(letter >= 97 && letter <= 122)
+			
+			if(isAcceptable(letter))
 			{
-				word2 = word2 + letter;
+				wordEnd = wordEnd + letter;
+				
+				if (i == word.length() - 1)
+				{
+					wordEnd = cleanup(wordEnd);
+					
+					if(!wordEnd.isEmpty())
+						end.add(wordEnd);
+				}
 			}
 			else
 			{
-				if(word2.length() > 0)
-					end.add(word2);
-				word2 = "";
+				
+				wordEnd = cleanup(wordEnd);
+				
+				if(!wordEnd.isEmpty())
+					end.add(wordEnd);
+				
+				wordEnd = "";
 			}
 			i++;
 		}
@@ -67,9 +136,26 @@ public class ScrubWords
 	}
 	
 	
-	// i haven't coded this in because i just thought of it, but maybe i could differentiate between different kinds of non-letter characters
-	// some would count as word enders like periods and commas and apostrophes and be treated like the first method
-	// others would not and would be treated like the second method, things like dashes, slashes, @, &, *, etc.
-	// if we think that's a good idea i could fix that soon
+	public static boolean isAcceptable(char letter)
+	{
+		if(Character.isLetterOrDigit(letter) || letter == 39)
+		{
+			return true;
+		}
+		return false;
+	}
 	
+	public static String cleanup(String word)
+	{
+		while(word.length() > 0 && word.startsWith("'"))
+			word = word.substring(1);
+		
+		while(word.length() > 1 && word.endsWith("'"))
+			word = word.substring(0, word.length()-1);
+		
+		if(word.length() > 1 && word.endsWith("'s"))
+			word = word.substring(0, word.length()-2);
+		
+		return word;
+	}
 }

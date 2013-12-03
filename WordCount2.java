@@ -145,15 +145,6 @@ public class WordCount2 {
 	}
 	
 	
-	public boolean isLetter(char letter)
-	{
-		if(letter >= 97 && letter <= 122 || letter >= 65 && letter <= 90)
-		{
-			return true;
-		}
-		return false;
-	}
-	
 	public static String cleanup(String word)
 	{
 		if(word.charAt(0)==39)
