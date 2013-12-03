@@ -127,12 +127,17 @@ public class WordCount2 {
 			if(Character.isLetterOrDigit(letter) || letter == 39)
 			{
 				wordEnd = wordEnd + letter;
+				
+				if (i == word.length() - 1 && !wordEnd.equals("")) {
+					wordEnd = cleanup(wordEnd);
+					end.add(wordEnd);
+				}
 			}
 			else
 			{
 				if(wordEnd.length() > 0)
 				{
-					cleanup(wordEnd);
+					wordEnd = cleanup(wordEnd);
 					end.add(wordEnd);
 				}
 				wordEnd = "";
@@ -156,16 +161,15 @@ public class WordCount2 {
 	
 	public static String cleanup(String word)
 	{
-		if(word.charAt(0)==39)
+		while(word.length() > 0 && !Character.isLetterOrDigit(word.charAt(0)))
 			word = word.substring(1);
 		
-		if(word.length() > 3) {
-		if(word.charAt(word.length()-1)==39)
+		while(word.length() > 1 && !Character.isLetterOrDigit(word.charAt(word.length()-1)))
 			word = word.substring(0, word.length()-1);
 		
-		if(word.substring(word.length()-2).equals("'s"))
+		if(word.length() > 1 && word.substring(word.length()-2).equals("'s"))
 			word = word.substring(0, word.length()-2);
-		}
+		
 		return word;
 	}
 }
