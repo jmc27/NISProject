@@ -1,43 +1,100 @@
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.StringTokenizer;
 
-public class ScrubWords
-{
-	/*
-	// takes a word until the first punctuation
-	public String scrubWord(String word)
-	{
-		word = word.toLowerCase();
-		int i = 0;
-		boolean done = false;
-		String end = "";
-		char letter;
-		
-		while(!done && i < word.length())
-		{
-			letter = word.charAt(i);
-			
-			if(letter >= 97 && letter <= 122)
-			{
-				end = end + letter;
-			}
-			else
-			{
-				done = true;
-			}
-			i++;
-		}
-		
-		
-		return end;
-		
-	}*/
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.FileOutputFormat;
+import org.apache.hadoop.mapred.JobClient;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapred.MapReduceBase;
+import org.apache.hadoop.mapred.Mapper;
+import org.apache.hadoop.mapred.OutputCollector;
+import org.apache.hadoop.mapred.Reducer;
+import org.apache.hadoop.mapred.Reporter;
+import org.apache.hadoop.mapred.TextOutputFormat;
+
+import edu.umd.cloud9.collection.wikipedia.*;
+
+
+
+public class ScrubWords {
+
+	public static class ScrubWordsMapper extends MapReduceBase
+	implements Mapper<LongWritable, WikipediaPage, Text, IntWritable> {
 	
-	// splits the word and returns an ArrayList<String> of what punctuation splits up
-	// i assumed most contractions would result in one letter things we could filter out as stop words?
-	// ex. mother-in-law should result in an arraylist {mother, in, law}
-	// won't results in arraylist {won, t} issues arise when deciding what to do with these because both aren't really viable words to index
-	// lions' results in arraylist {lions} and here is the issue of pluralization is there a difference between lion and lions or should it be scrubbed
-	public ArrayList<String> scrubWords(String word)
+		private Text word = new Text();
+		private final static IntWritable one = new IntWritable(1);
+
+		public void map(LongWritable key, WikipediaPage value,
+				OutputCollector<Text, IntWritable>	output, Reporter report)
+				throws IOException {
+			
+			if (value.isArticle()) {
+				
+				String content = value.getContent();
+				StringTokenizer st = new StringTokenizer(content);
+			    
+				while (st.hasMoreTokens()){
+			    	String s = st.nextToken();
+			    	
+			    	ArrayList<String> words = scrubWords(s);
+			    	
+			    	for (String s2: words) {
+			    		word.set(s2);
+			    		output.collect(word, one);
+			    	}
+			    }
+			}
+		}
+	}
+
+	public static class ScrubWordsReducer extends MapReduceBase
+		implements Reducer<Text, IntWritable, Text, IntWritable> {
+		
+		public void reduce (Text key, Iterator<IntWritable> values,
+				OutputCollector<Text, IntWritable> output, Reporter report)
+				throws IOException {
+			
+			int count = 0;
+			
+			while (values.hasNext()) {
+				count += values.next().get();
+			}
+			
+			output.collect(key, new IntWritable(count));
+			
+		}
+	}
+
+	public static void main (String[] args) throws Exception {
+		JobConf conf = new JobConf(ScrubWords.class);
+		conf.setJobName("ScrubWords");
+		
+		conf.setInputFormat(WikipediaPageInputFormat.class);
+		conf.setOutputFormat(TextOutputFormat.class);
+		
+		conf.setMapperClass(ScrubWordsMapper.class);
+		conf.setReducerClass(ScrubWordsReducer.class);
+		conf.setMapOutputKeyClass(Text.class);
+		conf.setMapOutputValueClass(IntWritable.class);
+		conf.setOutputKeyClass(Text.class);
+		conf.setOutputValueClass(IntWritable.class);
+		
+		FileInputFormat.setInputPaths(conf, new Path(args[0]));
+		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+		
+		long startTime = System.currentTimeMillis();
+		JobClient.runJob(conf);
+		System.out.println("Job finished in: " + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
+	}
+	
+	
+	public static ArrayList<String> scrubWords(String word)
 	{
 		//word = word.toLowerCase();
 		int i = 0;
@@ -52,12 +109,17 @@ public class ScrubWords
 			if(Character.isLetterOrDigit(letter) || letter == 39)
 			{
 				wordEnd = wordEnd + letter;
+				
+				if (i == word.length() - 1 && !wordEnd.equals("")) {
+					wordEnd = cleanup(wordEnd);
+					end.add(wordEnd);
+				}
 			}
 			else
 			{
 				if(wordEnd.length() > 0)
 				{
-					cleanup(wordEnd);
+					wordEnd = cleanup(wordEnd);
 					end.add(wordEnd);
 				}
 				wordEnd = "";
@@ -79,15 +141,15 @@ public class ScrubWords
 		return false;
 	}
 	
-	public String cleanup(String word)
+	public static String cleanup(String word)
 	{
-		if(word.charAt(0)==39)
+		while(word.length() > 0 && !Character.isLetterOrDigit(word.charAt(0)))
 			word = word.substring(1);
 		
-		if(word.charAt(word.length()-1)==39)
+		while(word.length() > 1 && !Character.isLetterOrDigit(word.charAt(word.length()-1)))
 			word = word.substring(0, word.length()-1);
 		
-		if(word.substring(word.length()-2).equals("'s"))
+		if(word.length() > 1 && word.substring(word.length()-2).equals("'s"))
 			word = word.substring(0, word.length()-2);
 		
 		return word;
