@@ -49,7 +49,7 @@ public class WCScrub {
 			    	for(String s2: words)
 			    	{
 			    		word.set(s2);
-			    		id.set("id:" + articleID + ", pos:" + totalWords);
+			    		id.set("id:" + articleID + "|pos:" + totalWords + ", ");
 			    		output.collect(word, id);
 			    	}
 			    	
@@ -82,7 +82,7 @@ public class WCScrub {
 				count++;
 			}
 			
-			id += ", count: " + count;
+			id += " total word count: " + count;
 
 			articleID.set(id);
 			
