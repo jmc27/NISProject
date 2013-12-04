@@ -1,7 +1,5 @@
 import java.io.IOException;
 import java.util.*;
-import java.util.Iterator;
-import java.util.StringTokenizer;
 
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
@@ -105,7 +103,6 @@ public class ScrubWords {
 	
 	public static ArrayList<String> scrubWords(String word)
 	{
-		//word = word.toLowerCase();
 		int i = 0;
 		ArrayList<String> end = new ArrayList<String>();
 		char letter;
@@ -115,7 +112,7 @@ public class ScrubWords {
 		{
 			letter = word.charAt(i);
 			
-			if(Character.isLetterOrDigit(letter) || letter == 39)
+			/*if(Character.isLetterOrDigit(letter) || letter == 39)
 			{
 				wordEnd = wordEnd + letter;
 				
@@ -132,6 +129,28 @@ public class ScrubWords {
 					end.add(wordEnd);
 				}
 				wordEnd = "";
+			}*/
+			if(isAcceptable(letter))
+			{
+				wordEnd = wordEnd + letter;
+				
+				if (i == word.length() - 1)
+				{
+					wordEnd = cleanup(wordEnd);
+					
+					if(!wordEnd.isEmpty())
+						end.add(wordEnd);
+				}
+			}
+			else
+			{
+				
+				wordEnd = cleanup(wordEnd);
+				
+				if(!wordEnd.isEmpty())
+					end.add(wordEnd);
+				
+				wordEnd = "";
 			}
 			i++;
 		}
@@ -140,17 +159,31 @@ public class ScrubWords {
 		return end;
 	}
 	
-	
-	public boolean isLetter(char letter)
+	public static boolean isAcceptable(char letter)
 	{
-		if(letter >= 97 && letter <= 122 || letter >= 65 && letter <= 90)
+		if(Character.isLetterOrDigit(letter) || letter == 39)
 		{
 			return true;
 		}
 		return false;
 	}
 	
+	// different and cleaner, we'll see if it works
 	public static String cleanup(String word)
+	{
+		while(word.length() > 0 && word.startsWith("'"))
+			word = word.substring(1);
+		
+		while(word.length() > 1 && word.endsWith("'"))
+			word = word.substring(0, word.length()-1);
+		
+		if(word.length() > 1 && word.endsWith("'s"))
+			word = word.substring(0, word.length()-2);
+		
+		return word;
+	}
+	
+	/*public static String cleanup(String word)
 	{
 		while(word.length() > 0 && !Character.isLetterOrDigit(word.charAt(0)))
 			word = word.substring(1);
@@ -162,5 +195,7 @@ public class ScrubWords {
 			word = word.substring(0, word.length()-2);
 		
 		return word;
-	}
+	}*/
+	
+	
 }
