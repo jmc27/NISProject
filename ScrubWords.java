@@ -21,12 +21,12 @@ import edu.umd.cloud9.collection.wikipedia.*;
 
 
 public class ScrubWords {
-	private static final String[] STOP = {"the", "of", "and", "in", "to", "a", "is", "the", "as", "by",
+	private static final String[] STOP = {"the", "of", "and", "in", "to", "a", "is", "as", "by",
 			"that", "for", "was", "with","are","on", "from", "or", "an", "his", "be",
 			"which", "at", "have", "it", "not", "were", "has", "also", "he", "but", "one",
 			"had", "other", "their", "this", "its", "been", "such", "first", "more", "used",
 			"can", "all", "they", "who", "than", "some", "most", "into", "only", "many",
-			"two", "many", "would", "she", "he"};
+			"two", "would", "she"};
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(Arrays.asList(STOP));
 	
 	public static class ScrubWordsMapper extends MapReduceBase
