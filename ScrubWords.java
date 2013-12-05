@@ -21,19 +21,19 @@ import edu.umd.cloud9.collection.wikipedia.*;
 
 
 public class ScrubWords {
-	private static final String[] STOP = {"the", "of", "and", "in", "to", "a",
-		"is", "the", "as", "by", "that", "for", "was", "with", "are", "on",
-		"from", "or", "an", "his", "be", "which", "at", "have", "it",
-		"not", "were", "has", "also", "he", "but", "one", "had", "other",
-		"their", "this", "its", "been", "such", "first", "more", "used",
-		"can", "all", "they", "who", "than", "some", "most", "into",
-		"only", "many", "two", "many", "would", "she", "he", "him", "her",
-		"after", "between", "during", "about", "being", "both", "before",
-		"any", "early", "four", "each", "end", "could", "if", "did", "along",
-		"every", "different", "another", "five", "do", "down", "however", "but",
-		"given", "become", "because", "again", "among", "few", "came", "although",
-		"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
-		"3", "4", "5", "6", "7", "8", "9", "after"};
+	private static final String[] STOP = {"the", "of", "and", "in", "to", "a", "is", "as", "by",
+			"that", "for", "was", "with","are","on", "from", "or", "an", "his", "be",
+			"which", "at", "have", "it", "not", "were", "has", "also", "he", "but", "one",
+			"had", "other", "their", "this", "its", "been", "such", "first", "more", "used",
+			"can", "all", "they", "who", "than", "some", "most", "into", "only", "many",
+			"two", "many", "would", "she", "he", "him", "her", "him", "her",
+			"after", "between", "during", "about", "being", "both", "before",
+			"any", "early", "four", "each", "end", "could", "if", "did", "along",
+			"every", "different", "another", "five", "do", "down", "however", "but",
+			"given", "become", "because", "again", "among", "few", "came", "although",
+			"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
+			"3", "4", "5", "6", "7", "8", "9", "after"};
+
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(Arrays.asList(STOP));
 	
 	public static class ScrubWordsMapper extends MapReduceBase
