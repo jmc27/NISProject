@@ -33,7 +33,7 @@ public class DocPositions {
 			"not", "were", "has", "also", "he", "but", "one", "had", "other",
 			"their", "this", "its", "been", "such", "first", "more", "used",
 			"can", "all", "they", "who", "than", "some", "most", "into",
-			"only", "many", "two", "many", "would", "she", "he" };
+			"only", "many", "two", "many", "would", "she", "he", "him", "her"};
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(
 			Arrays.asList(STOP));
 
