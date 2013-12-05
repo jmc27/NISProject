@@ -48,7 +48,7 @@ public class DocPositions {
 				OutputCollector<Text, PairOfStringInt> output, Reporter report)
 				throws IOException {
 
-			if (value.isArticle()) {
+			if (value.isArticle() && !value.isEmpty()) {
 				String articleID = value.getDocid();
 				totalWords = 0;
 
