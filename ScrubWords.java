@@ -61,7 +61,7 @@ public class ScrubWords {
 				    	
 				    	for (String s2: words) {
 				    		if(!STOP_WORDS.contains(s2.toLowerCase())) {
-				    			word.set(s2);
+				    			word.set(s2.toLowerCase());
 				    			output.collect(word, one);
 				    		}
 				    	}
