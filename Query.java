@@ -1,8 +1,4 @@
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.*;
 
 import javax.security.auth.login.Configuration;
@@ -46,33 +42,21 @@ public class Query {
 			HashSet<String> include = new HashSet<String>();
 			HashSet<String> exclude = new HashSet<String>();
 			
-			boolean check = true;
 			while(parse.hasMoreTokens()){
 				String current = parse.nextToken();
-				if (current.equals("not")){
-					check = false;
-				}
-				if (check){
+				if (!( (current.equalsIgnoreCase("not")) || (current.equalsIgnoreCase("and")) || (current.equalsIgnoreCase("or")))){
 					include.add(current);
-				} else {
-					exclude.add(current);
 				}
 			}
 			
 			StringTokenizer tokenizer = new StringTokenizer(value.toString());
-      		String word = tokenizer.nextToken().toLowerCase();
+      		String word = tokenizer.nextToken();
       		if (include.contains(word)){
       			currentWord.set(word);
       			while (tokenizer.hasMoreTokens()){
       				output.collect(new Text(tokenizer.nextToken()), currentWord);
       			}
       		} 
-      		if (exclude.contains(word)){
-      			currentWord.set("not "+word);
-      			while (tokenizer.hasMoreTokens()){
-      				output.collect(new Text(tokenizer.nextToken()), currentWord);
-      			}
-      		}
 			
 		}
 	}
@@ -88,24 +72,14 @@ public class Query {
 		public void reduce (Text key, Iterator<Text> values,
 				OutputCollector<Text, Text> output, Reporter report)
 				throws IOException {
-			boolean check = true;
-			Set<String> wordSet = new HashSet<String>();
+			HashSet<String> words = new HashSet<String>();
 			
-			while(values.hasNext() && check){
-				String current = values.next().toString();
-				wordSet.add(current);
-				if (current.startsWith("not ")){
-					check = false;
-				}
-				
+			while(values.hasNext()){
+				words.add(values.next().toString());
 			}
 			
-			if (check){
-				String wordList = "";
-				for (String word: wordSet){
-					wordList = wordList + word +", ";
-				}
-			output.collect(key, new Text(wordList));
+			if (check(query, words)){
+				output.collect(key,  new Text("1"));
 			}
 		}
 	}
@@ -135,5 +109,81 @@ public class Query {
 		long startTime = System.currentTimeMillis();
 		JobClient.runJob(conf);
 		System.out.println("Job finished in :" + (System.currentTimeMillis() - startTime) / 1000 + " seconds");
+	}
+	
+	public static boolean check(String query, HashSet<String> words){
+		Stack<String> stack = new Stack<String>();
+		StringTokenizer tokenizer = new StringTokenizer(query);
+		while (tokenizer.hasMoreTokens()){
+			String current = tokenizer.nextToken().toString();
+			if (current.equalsIgnoreCase("(")){
+				stack.push(current);
+			} else if (current.equalsIgnoreCase("not")){
+				String word = stack.pop();
+				if (word.equalsIgnoreCase("TRUE")){
+					stack.push("FALSE");
+				} else if (word.equalsIgnoreCase("FALSE")){
+					stack.push("TRUE");
+				} else {
+					if (words.contains(word)){
+						stack.push("FALSE");
+					} else {
+						stack.push("TRUE");
+					}
+				}
+				stack.pop();
+			} else if (current.equalsIgnoreCase("or")){
+				ArrayList<String> list = new ArrayList<String>();
+				String pop = "";
+				while (!pop.equalsIgnoreCase("(")){
+					pop = stack.pop();
+					if (!pop.equalsIgnoreCase("(")){
+						list.add(pop);
+					}
+				}
+				boolean check = false;
+				for (String word: list){
+					if (word.equalsIgnoreCase("TRUE")){
+						check = true;
+						break;
+					} else if (words.contains(word)){
+						check = true;
+					}
+				}
+				if (check){
+					stack.push("TRUE");
+				} else {
+					stack.push("FALSE");
+				}
+			} else if (current.equalsIgnoreCase("and")){
+				ArrayList<String> list = new ArrayList<String>();
+				String pop = "";
+				while (!pop.equalsIgnoreCase("(")){
+					pop = stack.pop();
+					if (!pop.equalsIgnoreCase("(")){
+						list.add(pop);
+					}
+				}
+				boolean check = true;
+				for (String word: list){
+					if (!words.contains(word)){
+						check = false;
+						break;
+					} else if (word.equalsIgnoreCase("FALSE")){
+						check = false;
+					}
+				}
+				if (check){
+					stack.push("TRUE");
+				} else {
+					stack.push("FALSE");
+				}
+			} else if (current.equalsIgnoreCase(")")){
+				
+			} else {
+				stack.push(current);
+			}
+		}	
+		return stack.pop().equalsIgnoreCase("TRUE");
 	}
 }
