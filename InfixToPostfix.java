@@ -60,8 +60,7 @@ public class InfixToPostfix {
 		// what's up with this line?
 		//result = "("+result+ " or )";
 		return result;
-	}
-} */
+	}*/
 
 /*import java.util.Arrays;
 import java.util.HashSet;
