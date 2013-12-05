@@ -26,7 +26,13 @@ public class ScrubWords {
 			"which", "at", "have", "it", "not", "were", "has", "also", "he", "but", "one",
 			"had", "other", "their", "this", "its", "been", "such", "first", "more", "used",
 			"can", "all", "they", "who", "than", "some", "most", "into", "only", "many",
-			"two", "would", "she"};
+			"two", "many", "would", "she", "he", "him", "her", "him", "her",
+			"after", "between", "during", "about", "being", "both", "before",
+			"any", "early", "four", "each", "end", "could", "if", "did", "along",
+			"every", "different", "another", "five", "do", "down", "however", "but",
+			"given", "become", "because", "again", "among", "few", "came", "although",
+			"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
+			"3", "4", "5", "6", "7", "8", "9", "after"};
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(Arrays.asList(STOP));
 	
 	public static class ScrubWordsMapper extends MapReduceBase
