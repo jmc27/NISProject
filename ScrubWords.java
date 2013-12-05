@@ -111,25 +111,6 @@ public class ScrubWords {
 		while(i < word.length())
 		{
 			letter = word.charAt(i);
-			
-			/*if(Character.isLetterOrDigit(letter) || letter == 39)
-			{
-				wordEnd = wordEnd + letter;
-				
-				if (i == word.length() - 1 && !wordEnd.equals("")) {
-					wordEnd = cleanup(wordEnd);
-					end.add(wordEnd);
-				}
-			}
-			else
-			{
-				if(wordEnd.length() > 0)
-				{
-					wordEnd = cleanup(wordEnd);
-					end.add(wordEnd);
-				}
-				wordEnd = "";
-			}*/
 			if(isAcceptable(letter))
 			{
 				wordEnd = wordEnd + letter;
@@ -183,19 +164,6 @@ public class ScrubWords {
 		return word;
 	}
 	
-	/*public static String cleanup(String word)
-	{
-		while(word.length() > 0 && !Character.isLetterOrDigit(word.charAt(0)))
-			word = word.substring(1);
-		
-		while(word.length() > 1 && !Character.isLetterOrDigit(word.charAt(word.length()-1)))
-			word = word.substring(0, word.length()-1);
-		
-		if(word.length() > 1 && word.substring(word.length()-2).equals("'s"))
-			word = word.substring(0, word.length()-2);
-		
-		return word;
-	}*/
 	
 	
 }
