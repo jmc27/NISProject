@@ -48,7 +48,7 @@ public class DocPositions {
 				OutputCollector<Text, PairOfStringInt> output, Reporter report)
 				throws IOException {
 
-			if (value.isArticle()) {
+			if (value.isArticle() && !value.isEmpty()) {
 				String articleID = value.getDocid();
 				totalWords = 0;
 
@@ -102,14 +102,17 @@ public class DocPositions {
 				int pos = id_pos.getRightElement();
 				multiMap.put(id, pos);
 			}
+			
+			String outAll = "";
 
 			@SuppressWarnings("unchecked")
 			Set<String> keys = multiMap.keySet();
 			for (String mapkey : keys) {
-				out.set("(" + mapkey + " " + multiMap.get(mapkey).toString()
-						+ ")");
-				output.collect(key, out);
+				outAll = outAll+" (" + mapkey + " " + multiMap.get(mapkey).toString()
+						+ ")";
 			}
+			out.set(new Text(outAll));
+			output.collect(key, out);
 
 		}
 	}

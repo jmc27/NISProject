@@ -39,23 +39,27 @@ public class ScrubWords {
 				OutputCollector<Text, IntWritable>	output, Reporter report)
 				throws IOException {
 			
-			if (value.isArticle()) {
+			if (value.isArticle() && !value.isEmpty()) {
 				
-				String content = value.getContent();
-				StringTokenizer st = new StringTokenizer(content);
-			    
-				while (st.hasMoreTokens()){
-			    	String s = st.nextToken();
-			    	
-			    	ArrayList<String> words = scrubWords(s);
-			    	
-			    	for (String s2: words) {
-			    		if(!STOP_WORDS.contains(s2.toLowerCase())) {
-			    			word.set(s2);
-			    			output.collect(word, one);
-			    		}
-			    	}
-			    }
+				String content = "";
+				content += value.getContent();
+				
+				if (content.length() > 0) {
+					StringTokenizer st = new StringTokenizer(content);
+				    
+					while (st.hasMoreTokens()){
+				    	String s = st.nextToken();
+				    	
+				    	ArrayList<String> words = scrubWords(s);
+				    	
+				    	for (String s2: words) {
+				    		if(!STOP_WORDS.contains(s2.toLowerCase())) {
+				    			word.set(s2);
+				    			output.collect(word, one);
+				    		}
+				    	}
+				    }
+				}
 			}
 		}
 	}
