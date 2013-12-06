@@ -32,7 +32,11 @@ public class ScrubWords {
 			"every", "different", "another", "five", "do", "down", "however", "but",
 			"given", "become", "because", "again", "among", "few", "came", "although",
 			"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
-			"3", "4", "5", "6", "7", "8", "9", "after"};
+			"3", "4", "5", "6", "7", "8", "9", "after", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+			"k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+			"them", "then", "up", "when", "out", "part", "people", "name", "number", "will",
+			"while", "use", "town", "work", "several", "same", "so", "since", "those", "often",
+			"known", "made", "de", "new", "no", "yes"};
 
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(Arrays.asList(STOP));
 	
