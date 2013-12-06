@@ -104,14 +104,15 @@ public class DocPositions {
 
 			@SuppressWarnings("unchecked")
 			Set<String> keys = multiMap.keySet();
-			/*for (String mapkey : keys) {
-				outAll = outAll+" (" + mapkey + " " + multiMap.get(mapkey).toString()
-						+ ")";
-			}*/
 			for (String mapkey : keys) {
-				out.set(" (" + mapkey + " " + multiMap.get(mapkey).toString() + ")");
+				outAll = outAll+" (" + mapkey + " " + multiMap.get(mapkey).toString() + ")";
+				out.set(outAll);
 				output.collect(key, out);
 			}
+			/*for (String mapkey : keys) {
+				out.set(" (" + mapkey + " " + multiMap.get(mapkey).toString() + ")");
+				output.collect(key, out);
+			}*/
 
 		}
 	}
