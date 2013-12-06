@@ -27,19 +27,22 @@ import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 
 public class DocPositions {
-	private static final String[] STOP = { "the", "of", "and", "in", "to", "a",
-			"is", "the", "as", "by", "that", "for", "was", "with", "are", "on",
-			"from", "or", "an", "his", "be", "which", "at", "have", "it",
-			"not", "were", "has", "also", "he", "but", "one", "had", "other",
-			"their", "this", "its", "been", "such", "first", "more", "used",
-			"can", "all", "they", "who", "than", "some", "most", "into",
-			"only", "many", "two", "many", "would", "she", "he", "him", "her",
-			"after", "between", "during", "about", "being", "both", "before",
-			"any", "early", "four", "each", "end", "could", "if", "did", "along",
-			"every", "different", "another", "five", "do", "down", "however", "but",
-			"given", "become", "because", "again", "among", "few", "came", "although",
-			"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
-			"3", "4", "5", "6", "7", "8", "9", "after"};
+	private static final String[] STOP = {"the", "of", "and", "in", "to", "a", "is", "as", "by",
+		"that", "for", "was", "with","are","on", "from", "or", "an", "his", "be",
+		"which", "at", "have", "it", "not", "were", "has", "also", "he", "but", "one",
+		"had", "other", "their", "this", "its", "been", "such", "first", "more", "used",
+		"can", "all", "they", "who", "than", "some", "most", "into", "only", "many",
+		"two", "many", "would", "she", "he", "him", "her", "him", "her",
+		"after", "between", "during", "about", "being", "both", "before",
+		"any", "early", "four", "each", "end", "could", "if", "did", "along",
+		"every", "different", "another", "five", "do", "down", "however", "but",
+		"given", "become", "because", "again", "among", "few", "came", "although",
+		"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
+		"3", "4", "5", "6", "7", "8", "9", "after", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+		"k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+		"them", "then", "up", "when", "out", "part", "people", "name", "number", "will",
+		"while", "use", "town", "work", "several", "same", "so", "since", "those", "often",
+		"known", "made", "de", "new", "no", "yes"};
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(
 			Arrays.asList(STOP));
 
@@ -86,18 +89,6 @@ public class DocPositions {
 				OutputCollector<Text, Text> output, Reporter report)
 				throws IOException {
 
-			/*
-			 * PairOfStrings id_pos = new PairOfStrings();
-			 * 
-			 * Set<String> articlesSet = new HashSet<String>(); Text articleID =
-			 * new Text(); String id = ""; String pos = "";
-			 * 
-			 * while (values.hasNext()) { String temp =
-			 * values.next().toString(); articlesSet.add(id); }
-			 * 
-			 * articleID.set(id);
-			 */
-
 			MultiMap multiMap = new MultiValueMap();
 			Text out = new Text();
 
@@ -113,12 +104,14 @@ public class DocPositions {
 
 			@SuppressWarnings("unchecked")
 			Set<String> keys = multiMap.keySet();
-			for (String mapkey : keys) {
+			/*for (String mapkey : keys) {
 				outAll = outAll+" (" + mapkey + " " + multiMap.get(mapkey).toString()
 						+ ")";
+			}*/
+			for (String mapkey : keys) {
+				out.set(" (" + mapkey + " " + multiMap.get(mapkey).toString() + ")");
+				output.collect(key, out);
 			}
-			out.set(new Text(outAll));
-			output.collect(key, out);
 
 		}
 	}
