@@ -27,25 +27,28 @@ import org.apache.commons.collections.MultiMap;
 import org.apache.commons.collections.map.MultiValueMap;
 
 public class DocPositionsSplit {
-	private static final String[] STOP = {"the", "of", "and", "in", "to", "a", "is", "as", "by",
-		"that", "for", "was", "with","are","on", "from", "or", "an", "his", "be",
+	
+	private static final String[] STOP = {"the", "of", "and", "in", "to", "is", "as", "by",
+		"that", "for", "was", "with","are","on", "from", "or", "an", "his", "be", "la",
 		"which", "at", "have", "it", "not", "were", "has", "also", "he", "but", "one",
 		"had", "other", "their", "this", "its", "been", "such", "first", "more", "used",
 		"can", "all", "they", "who", "than", "some", "most", "into", "only", "many",
-		"two", "many", "would", "she", "he", "him", "her", "him", "her",
-		"after", "between", "during", "about", "being", "both", "before",
-		"any", "early", "four", "each", "end", "could", "if", "did", "along",
+		"two", "three", "many", "would", "she", "he", "him", "her", "him", "her", "like",
+		"after", "between", "during", "about", "being", "both", "before", "now",
+		"any", "early", "four", "each", "end", "could", "if", "did", "along", "off",
 		"every", "different", "another", "five", "do", "down", "however", "but",
 		"given", "become", "because", "again", "among", "few", "came", "although",
-		"having", "himself", "herself", "myself", "themselves", "i", "0", "1", "2", 
-		"3", "4", "5", "6", "7", "8", "9", "after", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+		"having", "himself", "herself", "myself", "themselves", "0", "1", "2", 
+		"3", "4", "5", "6", "7", "8", "9", "after", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
 		"k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
 		"them", "then", "up", "when", "out", "part", "people", "name", "number", "will",
 		"while", "use", "town", "work", "several", "same", "so", "since", "those", "often",
-		"known", "made", "de", "new", "no", "yes"};
+		"known", "made", "de", "new", "no", "yes", "there", "where", "well"};
+	
 	private static final HashSet<String> STOP_WORDS = new HashSet<String>(
 			Arrays.asList(STOP));
 
+	
 	public static class DocPositionsMapper extends MapReduceBase implements
 			Mapper<LongWritable, WikipediaPage, Text, PairOfStringInt> {
 
@@ -100,15 +103,12 @@ public class DocPositionsSplit {
 				multiMap.put(id, pos);
 			}
 			
-			String outAll = "";
-
 			@SuppressWarnings("unchecked")
 			Set<String> keys = multiMap.keySet();
 			for (String mapkey : keys) {
-				outAll = outAll+" (" + mapkey + " " + multiMap.get(mapkey).toString() + ")";
+				out.set("(" + mapkey + ", " + multiMap.get(mapkey).toString() + ")");
+				output.collect(key, out);
 			}
-			out.set(outAll);
-			output.collect(key, out);
 		}
 	}
 	
@@ -116,7 +116,6 @@ public class DocPositionsSplit {
 		protected String generateFileNameForKeyValue(Text key, Text value, String name) {
 			String fileName = key.toString();
 			if (Character.isLetter(name.charAt(0))) {
-				System.out.println(fileName.substring(0, 1));
 				return fileName.substring(0, 1);
 			} else {
 				return "0";
@@ -186,7 +185,6 @@ public class DocPositionsSplit {
 		return false;
 	}
 
-	// different and cleaner, we'll see if it works
 	public static String cleanup(String word) {
 		while (word.length() > 0 && word.startsWith("'"))
 			word = word.substring(1);
